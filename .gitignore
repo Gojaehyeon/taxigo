@@ -1,0 +1,40 @@
+## macOS
+.DS_Store
+
+## Xcode
+build/
+DerivedData/
+*.xcodeproj/
+*.xcworkspace/
+!project.yml
+*.xcuserstate
+xcuserdata/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+.swiftpm/
+
+## Swift Package Manager
+Packages/
+Package.pins
+Package.resolved
+.build/
+
+## Dependencies
+Carthage/Build
+Pods/
+
+## Logs & tmp
+*.log
+.tmp/
+.cache/
+
+## OMC transient state (keep specs/plans/research artifacts; ignore session state)
+.omc/state/
+.omc/sessions/
+.omc/**/agent-replay-*.jsonl
+.omc/**/*-stdin-cache.json
+.omc/**/hud-state.json
+.omc/**/idle-notif-cooldown.json
+.omc/**/subagent-tracking.json
