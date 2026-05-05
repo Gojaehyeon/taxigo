@@ -35,9 +35,17 @@ struct MeterView: View {
                 NumberKeypad(entry: $keypadEntry)
                     .padding(.horizontal, 8)
                 StopCapsule(onReset: {
-                    vm.reset()
-                    keypadEntry = ""
-                    passengerName = ""
+                    switch vm.state {
+                    case .running:
+                        vm.stop()
+                        showReceipt = true
+                    case .finished:
+                        showReceipt = true
+                    case .idle:
+                        vm.reset()
+                        keypadEntry = ""
+                        passengerName = ""
+                    }
                 })
                 .padding(.horizontal, 4)
             }
@@ -55,7 +63,7 @@ struct MeterView: View {
         .onChange(of: soundEnabled) { _, new in SoundPlayer.shared.isEnabled = new }
         .onChange(of: hapticEnabled) { _, new in HapticEngine.shared.isEnabled = new }
         .alert("손님 성함을 알려주세요", isPresented: $showNamePrompt) {
-            TextField("예: 지수", text: $pendingName)
+            TextField("예: 재현", text: $pendingName)
                 .textInputAutocapitalization(.never)
             Button("운행 시작") {
                 let trimmed = pendingName.trimmingCharacters(in: .whitespaces)

@@ -39,12 +39,12 @@ final class FareCalculatorTests: XCTestCase {
     }
 
     func test_timeBilling_whenBelowLowSpeedThreshold() {
-        // After base distance, slow crawl for 30 seconds → 100 won
+        // After base distance, slow crawl for 30 seconds → 6 increments × 100 won
         let base = MeterTick(timestamp: .now, deltaDistance: 1_600, speed: 20, deltaTime: 60)
         let crawl = MeterTick(timestamp: .now, deltaDistance: 10, speed: 1.0, deltaTime: 30)
         let out = FareCalculator.calculate(ticks: [base, crawl])
-        XCTAssertEqual(out.timeFee, 100)
-        XCTAssertEqual(out.total, 4_900)
+        XCTAssertEqual(out.timeFee, 600)
+        XCTAssertEqual(out.total, 5_400)
     }
 
     func test_surchargeMultiplier_night20() {

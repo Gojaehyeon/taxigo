@@ -229,20 +229,35 @@ struct HistoryView: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "car.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(Color.meterCyan.opacity(0.25))
+        VStack(spacing: 14) {
+            SegmentedText(
+                text: "0000",
+                activeColor: Color.white.opacity(0.16),
+                digitWidth: 20, digitHeight: 40, spacing: 3
+            )
+            HStack(spacing: 6) {
+                Rectangle()
+                    .fill(Color.white.opacity(0.05))
+                    .frame(width: 7, height: 7)
+                Text("VACANT")
+                    .font(.system(size: 11, weight: .heavy, design: .monospaced))
+                    .tracking(3)
+                    .foregroundStyle(Color.white.opacity(0.28))
+                Text("1")
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Color.white.opacity(0.2))
+                    .baselineOffset(-3)
+            }
             Text("NO TRIPS LOGGED")
-                .font(.system(size: 12, weight: .black, design: .monospaced))
+                .font(.system(size: 11, weight: .black, design: .monospaced))
                 .tracking(3)
-                .foregroundStyle(Color.meterCyan.opacity(0.4))
+                .foregroundStyle(Color.white.opacity(0.32))
             Text("미터기에서 주행을 완료하면 여기 기록됩니다")
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.45))
+                .foregroundStyle(.white.opacity(0.28))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 60)
+        .padding(.vertical, 56)
         .background(
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.black)

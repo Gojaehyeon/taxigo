@@ -30,11 +30,5 @@ Pods/
 .tmp/
 .cache/
 
-## OMC transient state (keep specs/plans/research artifacts; ignore session state)
-.omc/state/
-.omc/sessions/
-.omc/**/agent-replay-*.jsonl
-.omc/**/*-stdin-cache.json
-.omc/**/hud-state.json
-.omc/**/idle-notif-cooldown.json
-.omc/**/subagent-tracking.json
+## OMC — dev-only state, not for public repo
+.omc/

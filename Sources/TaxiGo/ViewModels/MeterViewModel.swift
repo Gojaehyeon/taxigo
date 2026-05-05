@@ -26,6 +26,11 @@ final class MeterViewModel {
     private var calculator: FareCalculator
     private var tickerTask: Task<Void, Never>?
     private var previousFare: Int
+    private var useGPS: Bool = false
+
+    /// True once the trip has begun and the meter is using live GPS ticks.
+    var isUsingGPS: Bool { useGPS }
+    var locationAuthorization: LocationService.Authorization { locationService.authorization }
 
     init(
         locationService: LocationService? = nil,
@@ -55,10 +60,16 @@ final class MeterViewModel {
         endedAt = nil
         elapsed = 0
         distanceMeters = 0
+        currentSpeedKmh = 0
         previousFare = rule.baseFare
+        lastBreakdown = calculator.breakdown(surcharge: surcharge)
         updateSurchargeFromClock()
         state = .running
-        // Time‑based billing: no GPS required.
+
+        useGPS = locationService.authorization == .authorized
+        if useGPS {
+            locationService.start()
+        }
         runTimer()
         HapticEngine.shared.tick()
     }
@@ -70,7 +81,11 @@ final class MeterViewModel {
         locationService.stop()
         tickerTask?.cancel()
         tickerTask = nil
-        refreshTimeBasedFare()
+        if useGPS {
+            refreshBreakdown()
+        } else {
+            refreshTimeBasedFare()
+        }
         SoundPlayer.shared.receipt()
         HapticEngine.shared.receipt()
     }
@@ -79,11 +94,13 @@ final class MeterViewModel {
         tickerTask?.cancel()
         tickerTask = nil
         locationService.stop()
+        useGPS = false
         state = .idle
         startedAt = nil
         endedAt = nil
         elapsed = 0
         distanceMeters = 0
+        currentSpeedKmh = 0
         calculator = FareCalculator(rule: rule)
         previousFare = rule.baseFare
         lastBreakdown = calculator.breakdown(surcharge: .none)
@@ -136,7 +153,9 @@ final class MeterViewModel {
                     guard let self, self.state == .running, let startedAt = self.startedAt else { return }
                     self.elapsed = Date().timeIntervalSince(startedAt)
                     self.updateSurchargeFromClock()
-                    self.refreshTimeBasedFare()
+                    if !self.useGPS {
+                        self.refreshTimeBasedFare()
+                    }
                 }
             }
         }
@@ -163,7 +182,11 @@ final class MeterViewModel {
     }
 
     private func handle(tick: MeterTick) {
-        // Time‑based billing ignores GPS ticks. Kept for API compatibility.
+        guard state == .running, useGPS else { return }
+        calculator.ingest(tick)
+        distanceMeters = calculator.traveledMeters
+        currentSpeedKmh = max(0, tick.speed) * 3.6
+        refreshBreakdown()
     }
 
     private func refreshBreakdown() {
@@ -189,13 +212,18 @@ final class MeterViewModel {
 
     func makeTrip(friendName: String?, coffeePricePerCup: Int = 5_000) -> Trip? {
         guard let startedAt, let endedAt else { return nil }
-        let (base, timeFee) = rule.timeBasedFare(elapsed: endedAt.timeIntervalSince(startedAt))
-        let subtotal = base + timeFee
-        let total = Int((Double(subtotal) * surcharge.multiplier).rounded())
-        let breakdown = FareBreakdown(
-            baseFare: base, distanceFee: 0, timeFee: timeFee,
-            subtotal: subtotal, surcharge: surcharge, total: total
-        )
+        let breakdown: FareBreakdown
+        if useGPS {
+            breakdown = calculator.breakdown(surcharge: surcharge)
+        } else {
+            let (base, timeFee) = rule.timeBasedFare(elapsed: endedAt.timeIntervalSince(startedAt))
+            let subtotal = base + timeFee
+            let total = Int((Double(subtotal) * surcharge.multiplier).rounded())
+            breakdown = FareBreakdown(
+                baseFare: base, distanceFee: 0, timeFee: timeFee,
+                subtotal: subtotal, surcharge: surcharge, total: total
+            )
+        }
         let trip = Trip(
             startedAt: startedAt,
             endedAt: endedAt,
